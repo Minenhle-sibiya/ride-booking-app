@@ -1,3 +1,5 @@
+﻿require('dotenv').config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -6,19 +8,47 @@ const Ride = require('./models/Ride');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use (express.static("public"));
+app.use(express.static("public", { index: false }));
 
-const MONGODB_URI = "mongodb+srv://kwenzolulama8_db_user:DIpWb8OCd4CgqjEw@cluster0.7kjsjhk.mongodb.net/?appName=Cluster0";
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 
-mongoose.connect(MONGODB_URI)
-.then(() => {
-    console.log("Connected to MongoDB Atlas");
-})
-.catch((error) => {
-    console.error("Error connecting to MongoDB Atlas:", error);
+if (MONGO_URI) {
+  mongoose.connect(MONGO_URI, {
+    serverSelectionTimeoutMS: 10000,
+  })
+    .then(() => {
+      console.log("Connected to MongoDB Atlas");
+    })
+    .catch((error) => {
+      console.error("Error connecting to MongoDB Atlas:", error.message);
+    });
+} else {
+  console.warn("MongoDB connection string is missing. Continuing without a database connection.");
+}
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/login.html');
+});
+
+app.get('/rider', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
+app.get('/driver', (req, res) => {
+  res.sendFile(__dirname + '/public/driver.html');
 });
 
 app.post('/api/rides', async (req, res) => {
+  if (!MONGO_URI) {
+    return res.status(200).json({
+      _id: 'demo-ride',
+      pickup: req.body.pickup,
+      dropoff: req.body.dropoff,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+  }
+
   try {
     const { pickup, dropoff } = req.body;
     const ride = new Ride({ pickup, dropoff });
@@ -29,8 +59,11 @@ app.post('/api/rides', async (req, res) => {
   }
 });
 
-
 app.get('/api/rides', async (req, res) => {
+  if (!MONGO_URI) {
+    return res.json([]);
+  }
+
   try {
     const rides = await Ride.find().sort({ createdAt: -1 });
     res.json(rides);
@@ -40,6 +73,10 @@ app.get('/api/rides', async (req, res) => {
 });
 
 app.patch('/api/rides/:id', async (req, res) => {
+  if (!MONGO_URI) {
+    return res.json({ _id: req.params.id, status: req.body.status });
+  }
+
   try {
     const { status } = req.body;
     const ride = await Ride.findByIdAndUpdate(
@@ -56,6 +93,8 @@ app.patch('/api/rides/:id', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-    console.log("Server is running on port 3000");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
