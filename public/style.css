@@ -121,3 +121,17 @@ button {
   flex: 1;
   height: 100vh;
 }
+
+/* Logout button */
+.logout-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.logout-btn:hover {
+  background: rgba(255,255,255,0.03);
+}

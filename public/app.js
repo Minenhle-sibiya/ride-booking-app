@@ -149,3 +149,12 @@ async function loadRides() {
 
 // Load rides as soon as the page opens
 loadRides();
+
+// Logout handler (if logout button present on page)
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    try { localStorage.removeItem('ridebook-role'); } catch (e) {}
+    window.location.href = '/';
+  });
+}

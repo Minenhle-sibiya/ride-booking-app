@@ -4,6 +4,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const Ride = require('./models/Ride');
+const User = require('./models/User');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(cors());
@@ -36,6 +38,47 @@ app.get('/rider', (req, res) => {
 
 app.get('/driver', (req, res) => {
   res.sendFile(__dirname + '/public/driver.html');
+});
+
+app.get('/signup', (req, res) => {
+  res.sendFile(__dirname + '/public/signup.html');
+});
+
+// User signup
+app.post('/api/users', async (req, res) => {
+  if (!MONGO_URI) {
+    return res.status(501).json({ error: 'User signup requires a configured database (MONGO_URI).' });
+  }
+  try {
+    const { username, password, role } = req.body;
+    if (!username || !password || !role) return res.status(400).json({ error: 'Missing fields' });
+    const existing = await User.findOne({ username: username.toLowerCase() });
+    if (existing) return res.status(409).json({ error: 'Username already exists' });
+    const hash = bcrypt.hashSync(password, 10);
+    const user = new User({ username: username.toLowerCase(), passwordHash: hash, role });
+    await user.save();
+    return res.status(201).json({ username: user.username, role: user.role });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// User login
+app.post('/api/login', async (req, res) => {
+  if (!MONGO_URI) {
+    return res.status(501).json({ error: 'Login requires a configured database (MONGO_URI).' });
+  }
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Missing fields' });
+    const user = await User.findOne({ username: username.toLowerCase() });
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    const ok = bcrypt.compareSync(password, user.passwordHash);
+    if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+    return res.json({ username: user.username, role: user.role });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/rides', async (req, res) => {

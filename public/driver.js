@@ -44,3 +44,12 @@ async function updateRide(id, status) {
 
 loadPendingRides();
 setInterval(loadPendingRides, 5000);
+
+// Logout handler for driver page
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    try { localStorage.removeItem('ridebook-role'); } catch (e) {}
+    window.location.href = '/';
+  });
+}
