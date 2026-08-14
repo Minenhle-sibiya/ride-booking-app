@@ -7,6 +7,10 @@ let currentFilter = 'all';
 let notificationCount = 0;
 let driverMarker = null;
 
+// ============ ROUTE VARIABLES ============
+let routeLayer = null;
+let routeMarkers = [];
+
 // ============ LOAD USER ============
 function loadUser() {
   const userData = localStorage.getItem('ridebook_user');
@@ -251,6 +255,162 @@ function updateDriverMarker(lat, lng) {
   }
 }
 
+// ============ ROUTE FUNCTIONS ============
+// Get route from OSRM (Open Source Routing Machine)
+async function getRoute(startLat, startLng, endLat, endLng) {
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson&steps=true`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.code === 'Ok') {
+            return data;
+        } else {
+            console.error('Route error:', data);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error getting route:', error);
+        return null;
+    }
+}
+
+// Display route on map
+async function displayRoute(pickup, dropoff) {
+    // Remove existing route
+    clearRoute();
+    
+    // Get route data
+    const routeData = await getRoute(pickup.lat, pickup.lng, dropoff.lat, dropoff.lng);
+    
+    if (!routeData) {
+        showInAppNotification('Route Error', 'Could not find a driving route', 'error');
+        return;
+    }
+    
+    const route = routeData.routes[0];
+    const geometry = route.geometry;
+    const distance = (route.distance / 1000).toFixed(1); // km
+    const duration = Math.round(route.duration / 60); // minutes
+    
+    // Draw the route
+    if (geometry && geometry.coordinates) {
+        // Convert coordinates to Leaflet format [lat, lng]
+        const latlngs = geometry.coordinates.map(coord => [coord[1], coord[0]]);
+        
+        routeLayer = L.polyline(latlngs, {
+            color: '#7c3aed',
+            weight: 5,
+            opacity: 0.8,
+            dashArray: null,
+            lineJoin: 'round'
+        }).addTo(map);
+        
+        // Add route animation
+        animateRoute(latlngs);
+        
+        // Add distance/duration info
+        const center = map.getCenter();
+        const infoPopup = L.popup({
+            closeOnClick: false,
+            autoClose: false
+        })
+        .setLatLng([center.lat + 0.01, center.lng])
+        .setContent(`
+            <div style="font-size:14px;font-weight:600;color:#1a1a2e;">
+                🚗 ${distance} km · ${duration} min
+            </div>
+        `)
+        .openOn(map);
+        
+        // Store route info
+        routeMarkers.push({
+            type: 'info',
+            popup: infoPopup
+        });
+        
+        // Update ride details with real route data
+        updateRouteDetails(distance, duration);
+        
+        showInAppNotification(
+            'Route Found',
+            `${distance} km · ${duration} minutes`,
+            'success'
+        );
+        
+        // Fit map to show entire route
+        const bounds = L.latLngBounds(latlngs);
+        map.fitBounds(bounds, { padding: [50, 50] });
+    }
+}
+
+// Animate route (draw line progressively)
+function animateRoute(latlngs) {
+    if (!routeLayer) return;
+    
+    let index = 0;
+    const totalPoints = latlngs.length;
+    
+    // Create a copy of the route with only the first point
+    const animatedLatLngs = [latlngs[0]];
+    routeLayer.setLatLngs(animatedLatLngs);
+    
+    const interval = setInterval(() => {
+        index++;
+        if (index < totalPoints) {
+            animatedLatLngs.push(latlngs[index]);
+            routeLayer.setLatLngs(animatedLatLngs);
+        } else {
+            clearInterval(interval);
+            // Show full route
+            routeLayer.setLatLngs(latlngs);
+        }
+    }, 30); // Speed of animation
+}
+
+// Clear route from map
+function clearRoute() {
+    if (routeLayer) {
+        map.removeLayer(routeLayer);
+        routeLayer = null;
+    }
+    
+    routeMarkers.forEach(marker => {
+        if (marker.popup) {
+            map.removeLayer(marker.popup);
+        }
+        if (marker.marker) {
+            map.removeLayer(marker.marker);
+        }
+    });
+    routeMarkers = [];
+}
+
+// Update ride details with real route data
+function updateRouteDetails(distance, duration) {
+    const rideDistance = document.getElementById('rideDistance');
+    const rideDuration = document.getElementById('rideDuration');
+    const rideFare = document.getElementById('rideFare');
+    
+    if (rideDistance) rideDistance.textContent = distance;
+    if (rideDuration) rideDuration.textContent = duration;
+    
+    // Update fare based on actual distance
+    const perKmRates = {
+        economy: 15.00,
+        premium: 25.00,
+        suv: 30.00,
+        xl: 35.00
+    };
+    const rate = perKmRates[selectedRideType] || perKmRates.economy;
+    const baseFare = 25.00;
+    const fare = baseFare + (parseFloat(distance) * rate);
+    const finalFare = Math.round((fare + 5) * 100) / 100;
+    
+    if (rideFare) rideFare.textContent = 'R' + finalFare.toFixed(2);
+}
+
 // ============ RIDE TYPE & FARE CALCULATION ============
 document.querySelectorAll('.ride-type-btn').forEach(btn => {
   btn.addEventListener('click', function() {
@@ -321,6 +481,7 @@ document.querySelectorAll('.city-btn').forEach(btn => {
     const lng = parseFloat(this.dataset.lng);
     map.setView([lat, lng], 12);
     showNotification('Moved to ' + this.textContent, 'info');
+    clearRoute();
   });
 });
 
@@ -340,6 +501,7 @@ map.on('click', function(e) {
     clickState = 'dropoff';
     instruction.textContent = 'Now click to set your dropoff location';
     updateRideDetails();
+    clearRoute(); // Clear any existing route
   } else if (clickState === 'dropoff') {
     if (dropoffMarker) map.removeLayer(dropoffMarker);
     dropoffMarker = L.marker(e.latlng, { icon: redIcon })
@@ -350,6 +512,11 @@ map.on('click', function(e) {
     instruction.textContent = 'Ready! Click "Request Ride" to submit.';
     rideControls.classList.remove('hidden');
     updateRideDetails();
+    
+    // Show route on map
+    const pickup = pickupMarker.getLatLng();
+    const dropoff = dropoffMarker.getLatLng();
+    displayRoute(pickup, dropoff);
   }
 });
 
@@ -451,13 +618,15 @@ function selectSearchResult(result) {
         map.setView(latlng, 15);
         if (pickupSearch) pickupSearch.value = result.displayName;
         
-        // ✅ Update location status
+        // Update location status
         const locationStatus = document.getElementById('locationStatus');
         if (locationStatus) {
             locationStatus.textContent = `✅ Pickup set to: ${result.displayName}`;
             locationStatus.className = 'location-status success';
         }
         
+        // Clear route when pickup changes
+        clearRoute();
         updateRideDetails();
     } else {
         // Set dropoff marker
@@ -474,6 +643,13 @@ function selectSearchResult(result) {
         if (dropoffSearch) dropoffSearch.value = result.displayName;
         
         updateRideDetails();
+        
+        // Show route on map
+        if (pickupMarker) {
+            const pickup = pickupMarker.getLatLng();
+            const dropoff = dropoffMarker.getLatLng();
+            displayRoute(pickup, dropoff);
+        }
     }
     
     if (searchResults) searchResults.classList.add('hidden');
@@ -486,10 +662,6 @@ document.addEventListener('click', function(e) {
 });
 
 // ============ REQUEST RIDE ============
-const originalRequestHandler = requestBtn._listeners ? null : null;
-
-// Remove old listener and add new one
-requestBtn.removeEventListener('click', requestBtn._listeners);
 requestBtn.addEventListener('click', async function() {
   if (!pickupMarker || !dropoffMarker) {
     showInAppNotification('Error', 'Please set both pickup and dropoff locations', 'error');
@@ -598,6 +770,9 @@ function resetMarkers() {
   if (pickupSearch) pickupSearch.value = '';
   if (dropoffSearch) dropoffSearch.value = '';
   if (searchResults) searchResults.classList.add('hidden');
+  
+  // Clear route
+  clearRoute();
 }
 
 resetBtn.addEventListener('click', resetMarkers);
@@ -672,6 +847,22 @@ function addRideToList(ride) {
       const rideId = this.dataset.ride;
       await rateRide(rideId, rating);
     });
+  });
+  
+  // Add click to show route
+  li.addEventListener('click', function() {
+    const rideId = this.id.replace('ride-', '');
+    // Find the ride in the loaded rides
+    // Note: You'll need to store rides in a global variable
+    // For now, we'll try to use the data from the ride object
+    if (ride.pickup && ride.dropoff) {
+      displayRoute(ride.pickup, ride.dropoff);
+      showInAppNotification(
+        'Route Displayed',
+        `Showing route for ride ${ride._id.slice(-6)}`,
+        'info'
+      );
+    }
   });
 }
 
@@ -935,12 +1126,6 @@ if (detectBtn) {
     });
 }
 
-// Auto-detect location on page load (optional)
-// Uncomment this if you want auto-detection on page load
-// setTimeout(() => {
-//     detectUserLocation();
-// }, 2000);
-
 async function detectUserLocation() {
     if (isLocating) return;
     
@@ -948,7 +1133,6 @@ async function detectUserLocation() {
     const pickupSearch = document.getElementById('pickupSearch');
     const locationStatus = document.getElementById('locationStatus');
     
-    // Check if geolocation is available
     if (!navigator.geolocation) {
         locationStatus.textContent = '❌ Geolocation is not supported by your browser';
         locationStatus.className = 'location-status error';
@@ -962,7 +1146,6 @@ async function detectUserLocation() {
     locationStatus.className = 'location-status loading';
     
     try {
-        // Get position with high accuracy
         const position = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
                 enableHighAccuracy: true,
@@ -973,47 +1156,34 @@ async function detectUserLocation() {
         
         const { latitude, longitude } = position.coords;
         
-        // Show coordinates in status
         locationStatus.textContent = `📍 Found: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} - Getting address...`;
         
-        // Reverse geocode to get address
         const address = await geocoder.reverseGeocode(latitude, longitude);
         
         if (address) {
-            // Update the pickup search field
             pickupSearch.value = address.displayName;
             locationStatus.textContent = `✅ Location found: ${address.displayName}`;
             locationStatus.className = 'location-status success';
             
-            // Set the marker on the map
             const latlng = L.latLng(latitude, longitude);
             
-            // Remove existing pickup marker if any
             if (pickupMarker) {
                 map.removeLayer(pickupMarker);
             }
             
-            // Create new pickup marker
             pickupMarker = L.marker(latlng, { icon: greenIcon })
                 .addTo(map)
                 .bindPopup('📍 Pickup: ' + address.displayName)
                 .openPopup();
             
-            // Update state
             if (clickState === 'pickup' || clickState === 'dropoff') {
                 clickState = 'dropoff';
                 instruction.textContent = 'Now click to set your dropoff location';
-            } else if (clickState === 'done') {
-                // If already done, keep state but update marker
             }
             
-            // Center map on location
             map.setView(latlng, 15);
-            
-            // Update ride details
             updateRideDetails();
             
-            // Show notification
             showInAppNotification(
                 'Location Detected',
                 `Pickup set to: ${address.displayName}`,
@@ -1021,12 +1191,10 @@ async function detectUserLocation() {
             );
             
         } else {
-            // If reverse geocoding fails, use coordinates
             pickupSearch.value = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
             locationStatus.textContent = `📍 Location found (coordinates): ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
             locationStatus.className = 'location-status success';
             
-            // Set marker with coordinates
             const latlng = L.latLng(latitude, longitude);
             if (pickupMarker) map.removeLayer(pickupMarker);
             pickupMarker = L.marker(latlng, { icon: greenIcon })
@@ -1072,7 +1240,6 @@ async function detectUserLocation() {
             'error'
         );
         
-        // Focus on pickup search so user can type
         pickupSearch.focus();
         
     } finally {
@@ -1088,10 +1255,8 @@ if (pickupSearch) {
         const query = this.value.trim();
         if (!query) return;
         
-        // Search for the address
         const results = await geocoder.search(query);
         if (results && results.length > 0) {
-            // Select the first result
             const result = results[0];
             const latlng = L.latLng(result.lat, result.lng);
             
@@ -1109,7 +1274,9 @@ if (pickupSearch) {
             map.setView(latlng, 15);
             updateRideDetails();
             
-            // Update status
+            // Clear route when pickup changes
+            clearRoute();
+            
             const locationStatus = document.getElementById('locationStatus');
             if (locationStatus) {
                 locationStatus.textContent = `✅ Pickup updated to: ${result.displayName}`;
