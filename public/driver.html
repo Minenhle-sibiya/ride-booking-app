@@ -18,20 +18,53 @@
       min-height: 100vh;
       color: #ffffff;
     }
-    #driver-dashboard h1 {
-      color: #00d4aa;
-      margin-bottom: 5px;
-    }
-    #driver-dashboard p {
-      color: #aaaaaa;
+    .driver-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
       margin-bottom: 20px;
+    }
+    .driver-header h1 {
+      color: #00d4aa;
+      font-size: 1.8rem;
+    }
+    .driver-header p {
+      color: #aaaaaa;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .ride-count {
+      background: #16213e;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #aaaaaa;
+    }
+    .ride-count span {
+      color: #00d4aa;
+      font-weight: bold;
+    }
+    .logout-btn {
+      background: #e74c3c;
+      color: #ffffff;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .logout-btn:hover {
+      background: #c0392b;
     }
     .ride-card {
       background: #16213e;
       padding: 16px;
       border-radius: 8px;
       margin-bottom: 12px;
-      border-left: 3px solid #ffc107;
+      border-left: 4px solid #ffc107;
     }
     .ride-card.accepted {
       border-left-color: #00d4aa;
@@ -39,16 +72,13 @@
     .ride-card.in_progress {
       border-left-color: #3498db;
     }
-    .ride-card.completed {
-      border-left-color: #6c757d;
-      opacity: 0.7;
+    .ride-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
     }
-    .ride-card .coords {
-      font-size: 0.95rem;
-      color: #cccccc;
-      margin-bottom: 10px;
-    }
-    .ride-card .status-badge {
+    .status-badge {
       display: inline-block;
       padding: 2px 10px;
       border-radius: 12px;
@@ -66,82 +96,132 @@
     }
     .status-badge.in_progress {
       background: #3498db;
-      color: #fff;
+      color: #ffffff;
     }
-    .status-badge.completed {
-      background: #6c757d;
-      color: #fff;
+    .ride-type-badge {
+      background: #2a2a4a;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      margin-left: 6px;
+      text-transform: capitalize;
+      color: #aaaaaa;
     }
-    .ride-card .ride-meta {
+    .ride-time {
+      font-size: 0.75rem;
+      color: #666666;
+    }
+    .ride-coords {
+      font-size: 0.95rem;
+      color: #cccccc;
+      margin-bottom: 10px;
+    }
+    .ride-coords strong {
+      color: #00d4aa;
+    }
+    .ride-coords .dropoff-label {
+      color: #e74c3c;
+    }
+    .ride-meta {
       display: flex;
       gap: 12px;
       font-size: 0.85rem;
-      color: #888;
+      color: #888888;
       margin-top: 6px;
+      flex-wrap: wrap;
     }
-    .ride-card button { 
-      margin-right: 8px; 
+    .ride-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .ride-actions button {
       padding: 8px 16px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font-weight: 600;
       font-size: 0.85rem;
+      transition: background 0.3s;
     }
-    .accept-btn {
+    .btn-accept {
       background: #00d4aa;
       color: #1a1a2e;
     }
-    .accept-btn:hover {
+    .btn-accept:hover {
       background: #00b894;
     }
-    .complete-btn {
-      background: #6c63ff;
+    .btn-start {
+      background: #3498db;
       color: #ffffff;
     }
-    .complete-btn:hover {
-      background: #5a52d9;
+    .btn-start:hover {
+      background: #2980b9;
     }
-    .no-rides { 
-      color: #666; 
-      font-style: italic; 
+    .btn-cancel {
+      background: #e74c3c;
+      color: #ffffff;
+    }
+    .btn-cancel:hover {
+      background: #c0392b;
+    }
+    .btn-complete {
+      background: #00d4aa;
+      color: #1a1a2e;
+    }
+    .btn-complete:hover {
+      background: #00b894;
+    }
+    .no-rides {
       text-align: center;
       padding: 40px 0;
+      color: #666666;
     }
-    .ride-count {
-      background: #16213e;
-      padding: 8px 14px;
-      border-radius: 20px;
+    .no-rides p:first-child {
+      font-size: 1.2rem;
+    }
+    .no-rides p:last-child {
       font-size: 0.85rem;
-      color: #aaa;
+      margin-top: 8px;
     }
-    .ride-count span {
-      color: #00d4aa;
-      font-weight: bold;
+    .driver-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1a1a2e;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      border-left: 4px solid #00d4aa;
+      z-index: 1000;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      animation: slideIn 0.3s ease;
+      max-width: 350px;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
   </style>
 </head>
 <body>
   <div id="driver-dashboard">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div class="driver-header">
       <div>
-        <h1> Driver Dashboard</h1>
+        <h1>Driver Dashboard</h1>
         <p>Manage incoming ride requests</p>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span id="rideCount" class="ride-count"> <span id="countNumber">0</span> active</span>
-        <button onclick="logout()" style="background:#e74c3c;color:#fff;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;">
-          Logout
-        </button>
+      <div class="header-actions">
+        <span class="ride-count">Active: <span id="countNumber">0</span></span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
       </div>
     </div>
     <div id="driver-rides"></div>
   </div>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="driver.js"></script>
-  
   <script>
-    // Check if user is logged in
     const userData = localStorage.getItem('ridebook_user');
     if (!userData) {
         window.location.href = '/';
@@ -152,7 +232,7 @@
         window.location.href = '/rider';
     }
     
-    console.log(' Logged in as:', user.username, '(Driver)');
+    console.log('Logged in as:', user.username, '(Driver)');
     
     function logout() {
         localStorage.removeItem('ridebook_user');

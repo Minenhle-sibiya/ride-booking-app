@@ -6,10 +6,10 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh;
+  background: #0f0f1a;
+  color: #ffffff;
+  height: 100vh;
   overflow: hidden;
-  background: linear-gradient(135deg, #FFD1DC, #FFF5E1);
-  color: #1f2937;
 }
 
 #app {
@@ -18,71 +18,109 @@ body {
 }
 
 #sidebar {
-  width: 320px;
+  width: 340px;
   padding: 20px;
-  background: #fff;
-  color: #1f2937;
+  background: #1a1a2e;
   overflow-y: auto;
   flex-shrink: 0;
-  border-right: 1px solid rgba(0,0,0,0.04);
 }
 
 #sidebar h1 {
   font-size: 1.5rem;
-  margin-bottom: 10px;
-  color: #d63384;
+  color: #00d4aa;
 }
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-name {
+  color: #aaaaaa;
+  font-size: 0.9rem;
+}
+
+.logout-btn {
+  background: #e74c3c;
+  color: #ffffff;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.logout-btn:hover {
+  background: #c0392b;
+}
+
 #sidebar h2 {
-  font-size: 1rem;
-  margin-top: 20px;
+  font-size: 0.9rem;
+  margin-top: 15px;
   margin-bottom: 10px;
-  color: #6b7280;
+  color: #aaaaaa;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .instruction {
   font-size: 0.9rem;
-  color: #4b5563;
-  margin-bottom: 15px;
+  color: #cccccc;
+  margin: 10px 0;
 }
 
 #ride-controls {
   display: flex;
   gap: 10px;
-  margin-bottom: 15px;
+  margin: 10px 0;
 }
 
 #ride-controls.hidden {
   display: none;
 }
 
-button {
-  padding: 10px 16px;
+.btn-primary {
+  background: #00d4aa;
+  color: #1a1a2e;
   border: none;
+  padding: 10px 16px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.9rem;
   font-weight: 600;
-}
-#request-btn {
-  background: #ff8fab;
-  color: #fff;
+  font-size: 0.9rem;
   flex: 1;
 }
 
-#request-btn:hover {
-  background: #ff6f92;
+.btn-primary:hover {
+  background: #00b894;
 }
 
-#reset-btn {
-  background: #fff5f7;
-  color: #1f2937;
-  border: 1px solid rgba(0,0,0,0.04);
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-#reset-btn:hover {
-  background: #fff1f4;
+.btn-secondary {
+  background: #444466;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.btn-secondary:hover {
+  background: #555577;
 }
 
 #rides-list {
@@ -90,35 +128,44 @@ button {
 }
 
 #rides-list li {
-  background: #fff;
+  background: #16213e;
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 8px;
   font-size: 0.85rem;
-  border: 1px solid rgba(0,0,0,0.04);
 }
 
 #rides-list li .status {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 10px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
 }
 
 #rides-list li .status.pending {
-  background: #ffd7df;
-  color: #9b2c55;
+  background: #ffc107;
+  color: #1a1a2e;
 }
 
 #rides-list li .status.accepted {
-  background: #ff8fab;
-  color: #fff;
+  background: #00d4aa;
+  color: #1a1a2e;
+}
+
+#rides-list li .status.in_progress {
+  background: #3498db;
+  color: #ffffff;
 }
 
 #rides-list li .status.completed {
   background: #6c757d;
+  color: #ffffff;
+}
+
+#rides-list li .status.cancelled {
+  background: #e74c3c;
   color: #ffffff;
 }
 
@@ -127,16 +174,411 @@ button {
   height: 100vh;
 }
 
-/* Logout button */
-.logout-btn {
-  background: transparent;
-  border: 1px solid rgba(0,0,0,0.06);
-  color: #1f2937;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
+/* Ride Types */
+.ride-types {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 10px 0;
 }
-.logout-btn:hover {
-  background: rgba(0,0,0,0.02);
+
+.ride-type-btn {
+  padding: 8px 10px;
+  background: #16213e;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  color: #aaaaaa;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.ride-type-btn:hover {
+  background: #1a2a4e;
+  border-color: #444444;
+}
+
+.ride-type-btn.active {
+  background: #00d4aa;
+  border-color: #00d4aa;
+  color: #1a1a2e;
+}
+
+.ride-type-name {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ride-type-price {
+  display: block;
+  font-size: 0.7rem;
+  color: #666666;
+}
+
+.ride-type-btn.active .ride-type-price {
+  color: #1a1a2e;
+}
+
+/* Payment Method */
+.payment-method {
+  margin: 10px 0;
+  padding: 10px;
+  background: #16213e;
+  border-radius: 6px;
+}
+
+.payment-method label {
+  color: #aaaaaa;
+  font-size: 0.85rem;
+  margin-right: 10px;
+}
+
+.payment-method select {
+  background: #0f0f1a;
+  color: #ffffff;
+  padding: 6px 12px;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* Schedule Section */
+.schedule-section {
+  margin: 10px 0;
+  padding: 10px;
+  background: #16213e;
+  border-radius: 6px;
+}
+
+.schedule-section label {
+  color: #aaaaaa;
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.schedule-section input {
+  width: 100%;
+  padding: 8px 10px;
+  background: #0f0f1a;
+  color: #ffffff;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.schedule-section .hint {
+  display: block;
+  color: #666666;
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+
+/* Favorites Section */
+.favorites-section {
+  margin: 10px 0;
+  padding: 10px;
+  background: #16213e;
+  border-radius: 6px;
+}
+
+.favorites-section label {
+  color: #aaaaaa;
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.favorites-section select {
+  width: 100%;
+  padding: 8px 10px;
+  background: #0f0f1a;
+  color: #ffffff;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.add-favorite {
+  display: flex;
+  gap: 6px;
+}
+
+.add-favorite input {
+  flex: 1;
+  padding: 6px 10px;
+  background: #0f0f1a;
+  color: #ffffff;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.add-favorite .save-fav-btn {
+  padding: 6px 12px;
+  background: #00d4aa;
+  color: #1a1a2e;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.add-favorite .save-fav-btn:hover {
+  background: #00b894;
+}
+
+/* City Section */
+.city-section {
+  margin: 10px 0;
+  padding: 10px;
+  background: #16213e;
+  border-radius: 6px;
+}
+
+.city-section label {
+  color: #aaaaaa;
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.city-buttons {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.city-btn {
+  padding: 4px 10px;
+  background: #2a2a4a;
+  border: none;
+  border-radius: 4px;
+  color: #aaaaaa;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.3s;
+}
+
+.city-btn:hover {
+  background: #3a3a5a;
+  color: #ffffff;
+}
+
+/* Ride Details */
+#ride-details {
+  background: #16213e;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+#ride-details.hidden {
+  display: none;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  color: #cccccc;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  color: #888888;
+}
+
+.detail-item span:last-child {
+  font-weight: bold;
+  color: #00d4aa;
+}
+
+/* Notifications */
+#notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  max-width: 350px;
+}
+
+.notification {
+  background: #1a1a2e;
+  color: #ffffff;
+  padding: 14px 20px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border-left: 4px solid #00d4aa;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: slideInRight 0.4s ease;
+  font-size: 0.95rem;
+}
+
+.notification.success {
+  border-left-color: #00d4aa;
+  background: #0a2a1a;
+}
+
+.notification.error {
+  border-left-color: #e74c3c;
+  background: #2a0a0a;
+}
+
+.notification.info {
+  border-left-color: #3498db;
+  background: #0a1a2a;
+}
+
+.notification.fade-out {
+  animation: slideOutRight 0.4s ease forwards;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100px); opacity: 0; }
+}
+
+/* History */
+.history-filters {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 4px 12px;
+  background: #16213e;
+  border: 1px solid #2a2a4a;
+  border-radius: 15px;
+  color: #888888;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.3s;
+}
+
+.filter-btn:hover {
+  background: #1a2a4e;
+}
+
+.filter-btn.active {
+  background: #00d4aa;
+  color: #1a1a2e;
+  border-color: #00d4aa;
+}
+
+.history-item {
+  background: #16213e;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border-left: 3px solid #444444;
+  font-size: 0.85rem;
+}
+
+.history-item.completed {
+  border-left-color: #00d4aa;
+}
+
+.history-item.cancelled {
+  border-left-color: #e74c3c;
+}
+
+.history-item.pending {
+  border-left-color: #ffc107;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.history-coords {
+  color: #aaaaaa;
+  font-size: 0.8rem;
+}
+
+.history-meta {
+  display: flex;
+  gap: 12px;
+  color: #888888;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.history-date {
+  color: #666666;
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+
+.no-rides {
+  color: #666666;
+  font-style: italic;
+  padding: 10px 0;
+}
+
+/* Rating Stars */
+.rating-section {
+  margin-top: 8px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  color: #ffc107;
+  transition: transform 0.2s;
+}
+
+.star-btn:hover {
+  transform: scale(1.3);
+}
+
+.ride-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ride-type-badge {
+  background: #2a2a4a;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  margin-left: 6px;
+  text-transform: capitalize;
+  color: #aaaaaa;
+}
+
+.ride-time {
+  font-size: 0.7rem;
+  color: #666666;
+}
+
+.ride-coords {
+  font-size: 0.85rem;
+  color: #aaaaaa;
+  margin: 6px 0;
+}
+
+.ride-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: #888888;
 }

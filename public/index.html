@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RideBook - Request a Ride</title>
+  <title>RideBook - Book a Ride</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin="">
@@ -13,39 +13,37 @@
   <div id="app">
     <div id="sidebar">
       <!-- Header -->
-      <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:15px;">
-        <h1> RideBook</h1>
-        <div>
-          <span id="userName" style="color:#aaa;margin-right:10px;"></span>
-          <button onclick="logout()" style="background:#e74c3c;color:#fff;padding:6px 14px;border:none;border-radius:4px;cursor:pointer;font-size:0.8rem;">
-            Logout
-          </button>
+      <div class="sidebar-header">
+        <h1>RideBook</h1>
+        <div class="user-info">
+          <span id="userName" class="user-name">Guest</span>
+          <button onclick="logout()" class="logout-btn">Logout</button>
         </div>
       </div>
 
-      <!-- NEW: Ride Type Selection -->
+      <!-- Ride Type Selection -->
       <div class="ride-types">
         <button class="ride-type-btn active" data-type="economy">
-           Economy<br>
-          <small>$1.50/km</small>
+          <span class="ride-type-name">Economy</span>
+          <span class="ride-type-price">R15/km</span>
         </button>
         <button class="ride-type-btn" data-type="premium">
-           Premium<br>
-          <small>$2.50/km</small>
+          <span class="ride-type-name">Premium</span>
+          <span class="ride-type-price">R25/km</span>
         </button>
         <button class="ride-type-btn" data-type="suv">
-           SUV<br>
-          <small>$3.00/km</small>
+          <span class="ride-type-name">SUV</span>
+          <span class="ride-type-price">R30/km</span>
         </button>
         <button class="ride-type-btn" data-type="xl">
-           XL<br>
-          <small>$3.50/km</small>
+          <span class="ride-type-name">XL</span>
+          <span class="ride-type-price">R35/km</span>
         </button>
       </div>
 
-      <!-- NEW: Payment Method -->
+      <!-- Payment Method -->
       <div class="payment-method">
-        <label> Payment:</label>
+        <label>Payment Method:</label>
         <select id="paymentMethod">
           <option value="cash">Cash</option>
           <option value="card">Card</option>
@@ -53,53 +51,64 @@
         </select>
       </div>
 
-      <!-- NEW: Scheduled Ride -->
+      <!-- Scheduled Ride -->
       <div class="schedule-section">
-        <label> Schedule Ride:</label>
+        <label>Schedule Ride:</label>
         <input type="datetime-local" id="scheduledTime">
-        <small style="color:#666;display:block;margin-top:4px;">Leave empty for immediate booking</small>
+        <span class="hint">Leave empty for immediate booking</span>
       </div>
 
-      <!-- NEW: Favorite Locations -->
+      <!-- Favorite Locations -->
       <div class="favorites-section">
-        <label> Saved Locations:</label>
+        <label>Saved Locations:</label>
         <select id="favoritesSelect">
           <option value="">Select a saved location...</option>
         </select>
         <div class="add-favorite">
           <input type="text" id="favoriteName" placeholder="Location name">
-          <button id="saveFavoriteBtn"> Save</button>
+          <button id="saveFavoriteBtn" class="save-fav-btn">Save</button>
         </div>
       </div>
 
-      <p class="instruction" id="instruction"> Click the map to set your pickup location</p>
+      <!-- Quick Cities - South Africa -->
+      <div class="city-section">
+        <label>Quick Cities:</label>
+        <div class="city-buttons">
+          <button class="city-btn" data-lat="-33.9608" data-lng="25.6022">Port Elizabeth</button>
+          <button class="city-btn" data-lat="-33.9249" data-lng="18.4241">Cape Town</button>
+          <button class="city-btn" data-lat="-26.2041" data-lng="28.0473">Johannesburg</button>
+          <button class="city-btn" data-lat="-29.8587" data-lng="31.0218">Durban</button>
+        </div>
+      </div>
 
-      <!-- NEW: Ride Details -->
+      <p class="instruction" id="instruction">Click the map to set your pickup location</p>
+
+      <!-- Ride Details -->
       <div id="ride-details" class="hidden">
         <div class="detail-item">
-          <span> Distance:</span>
+          <span class="detail-label">Distance:</span>
           <span id="rideDistance">0</span> km
         </div>
         <div class="detail-item">
-          <span> Duration:</span>
+          <span class="detail-label">Duration:</span>
           <span id="rideDuration">0</span> min
         </div>
         <div class="detail-item">
-          <span> Estimated Fare:</span>
-          <span id="rideFare">$0.00</span>
+          <span class="detail-label">Estimated Fare:</span>
+          <span id="rideFare">R0.00</span>
         </div>
       </div>
 
       <div id="ride-controls" class="hidden">
-        <button id="request-btn" class="btn-primary">🚀 Request Ride</button>
-        <button id="reset-btn" class="btn-secondary">🔄 Reset</button>
+        <button id="request-btn" class="btn-primary">Request Ride</button>
+        <button id="reset-btn" class="btn-secondary">Reset</button>
       </div>
 
-      <h2> Your Rides</h2>
+      <h2>Your Rides</h2>
       <ul id="rides-list"></ul>
 
-      <!-- NEW: Ride History -->
-      <h2 style="margin-top:20px;"> Ride History</h2>
+      <!-- Ride History -->
+      <h2 style="margin-top:20px;">Ride History</h2>
       <div class="history-filters">
         <button class="filter-btn active" data-filter="all">All</button>
         <button class="filter-btn" data-filter="pending">Pending</button>
@@ -132,10 +141,10 @@
         window.location.href = '/driver';
     }
     
-    console.log(' Logged in as:', user.username, '(Rider)');
+    console.log('Logged in as:', user.username, '(Rider)');
     
     // Set username display
-    document.getElementById('userName').textContent = '👤 ' + (user.name || user.username);
+    document.getElementById('userName').textContent = user.name || user.username;
     
     function logout() {
         localStorage.removeItem('ridebook_user');
