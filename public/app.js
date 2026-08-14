@@ -4,6 +4,8 @@ let socket = null;
 let selectedRideType = 'economy';
 let selectedPayment = 'cash';
 let currentFilter = 'all';
+let notificationCount = 0;
+let driverMarker = null;
 
 // ============ LOAD USER ============
 function loadUser() {
@@ -40,6 +42,11 @@ const rideControls = document.getElementById('ride-controls');
 const requestBtn = document.getElementById('request-btn');
 const resetBtn = document.getElementById('reset-btn');
 const ridesList = document.getElementById('rides-list');
+const pickupSearch = document.getElementById('pickupSearch');
+const dropoffSearch = document.getElementById('dropoffSearch');
+const searchResults = document.getElementById('searchResults');
+let searchType = 'pickup';
+let searchTimeout = null;
 
 // ============ MARKER ICONS ============
 const greenIcon = L.icon({
@@ -85,6 +92,63 @@ function showNotification(message, type = 'info') {
   }, 3500);
 }
 
+// ============ IN-APP NOTIFICATIONS ============
+function showInAppNotification(title, message, type = 'info') {
+    const container = document.getElementById('notification-center');
+    if (!container) {
+        const newContainer = document.createElement('div');
+        newContainer.id = 'notification-center';
+        newContainer.className = 'notification-center';
+        document.body.appendChild(newContainer);
+    }
+    
+    const container2 = document.getElementById('notification-center');
+    const notif = document.createElement('div');
+    notif.className = `notification-item ${type}`;
+    
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+    
+    const time = new Date().toLocaleTimeString();
+    notificationCount++;
+    
+    notif.innerHTML = `
+        <span class="notif-icon">${icons[type] || 'ℹ️'}</span>
+        <div class="notif-content">
+            <div class="notif-title">${title}</div>
+            <div class="notif-message">${message}</div>
+            <div class="notif-time">${time}</div>
+        </div>
+    `;
+    
+    container2.prepend(notif);
+    
+    setTimeout(() => {
+        notif.classList.add('fade-out');
+        setTimeout(() => {
+            if (notif.parentNode) {
+                notif.remove();
+                notificationCount--;
+                updateNotificationBadge();
+            }
+        }, 400);
+    }, 6000);
+    
+    updateNotificationBadge();
+}
+
+function updateNotificationBadge() {
+    const badge = document.getElementById('notif-badge');
+    if (badge) {
+        badge.textContent = notificationCount;
+        badge.style.display = notificationCount > 0 ? 'inline' : 'none';
+    }
+}
+
 // ============ SOCKET.IO ============
 function initSocket() {
   try {
@@ -92,24 +156,64 @@ function initSocket() {
     
     socket.on('new-ride', (ride) => {
       if (currentUser && currentUser.role === 'driver') {
-        showNotification('New ride available!', 'info');
+        showInAppNotification(
+            'New Ride Available',
+            `New ride request from ${ride.riderName || 'a rider'}`,
+            'info'
+        );
+        loadRides();
       }
     });
     
     socket.on('ride-updated', (ride) => {
       updateRideInList(ride);
+      if (currentUser && currentUser.role === 'driver') {
+        if (ride.driverId === currentUser.id) {
+          showInAppNotification(
+              'Ride Updated',
+              `Ride status changed to: ${ride.status}`,
+              'info'
+          );
+        }
+      }
     });
     
     socket.on('ride-status-update', (ride) => {
       updateRideInList(ride);
-      const statusMessages = {
-        'accepted': 'Your ride has been accepted!',
-        'in_progress': 'Driver is on the way!',
-        'completed': 'Ride completed! Please rate your driver.',
-        'cancelled': 'Your ride has been cancelled.'
+      
+      const notifications = {
+        'accepted': {
+          title: 'Ride Accepted',
+          message: `Your ride has been accepted by ${ride.driverName || 'a driver'}`,
+          type: 'success'
+        },
+        'in_progress': {
+          title: 'Driver En Route',
+          message: `${ride.driverName || 'Your driver'} is on the way to pick you up`,
+          type: 'info'
+        },
+        'completed': {
+          title: 'Ride Complete',
+          message: 'Your ride is complete! Please rate your driver.',
+          type: 'success'
+        },
+        'cancelled': {
+          title: 'Ride Cancelled',
+          message: 'Your ride has been cancelled.',
+          type: 'error'
+        }
       };
-      if (statusMessages[ride.status]) {
-        showNotification(statusMessages[ride.status], 'success');
+      
+      const notif = notifications[ride.status];
+      if (notif && ride.riderId === currentUser?.id) {
+        showInAppNotification(notif.title, notif.message, notif.type);
+      }
+    });
+
+    // Driver location tracking
+    socket.on('driver-location-update', (data) => {
+      if (data.lat && data.lng) {
+        updateDriverMarker(data.lat, data.lng);
       }
     });
     
@@ -120,6 +224,32 @@ function initSocket() {
 }
 
 initSocket();
+
+// ============ DRIVER LOCATION TRACKING ============
+function updateDriverMarker(lat, lng) {
+  const location = L.latLng(lat, lng);
+  
+  const driverIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+  
+  if (!driverMarker) {
+    driverMarker = L.marker(location, { icon: driverIcon })
+      .addTo(map)
+      .bindPopup('Driver is on the way!');
+  } else {
+    driverMarker.setLatLng(location);
+  }
+  
+  if (clickState === 'done' || clickState === 'dropoff') {
+    map.setView(location, 14);
+  }
+}
 
 // ============ RIDE TYPE & FARE CALCULATION ============
 document.querySelectorAll('.ride-type-btn').forEach(btn => {
@@ -147,7 +277,6 @@ function calculateRideDetails(pickup, dropoff, rideType) {
             Math.sin(dLng/2) * Math.sin(dLng/2);
   const distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   
-  // South African Rates in Rands
   const perKmRates = {
     economy: 15.00,
     premium: 25.00,
@@ -224,16 +353,173 @@ map.on('click', function(e) {
   }
 });
 
+// ============ ADDRESS SEARCH ============
+if (pickupSearch) {
+  pickupSearch.addEventListener('input', function() {
+    searchType = 'pickup';
+    handleSearch(this.value);
+  });
+}
+
+if (dropoffSearch) {
+  dropoffSearch.addEventListener('input', function() {
+    searchType = 'dropoff';
+    handleSearch(this.value);
+  });
+}
+
+document.getElementById('searchPickupBtn')?.addEventListener('click', function() {
+  searchType = 'pickup';
+  handleSearch(pickupSearch.value);
+});
+
+document.getElementById('searchDropoffBtn')?.addEventListener('click', function() {
+  searchType = 'dropoff';
+  handleSearch(dropoffSearch.value);
+});
+
+function handleSearch(query) {
+  clearTimeout(searchTimeout);
+  
+  if (!query || query.length < 3) {
+    if (searchResults) searchResults.classList.add('hidden');
+    return;
+  }
+  
+  searchTimeout = setTimeout(async () => {
+    const results = await geocoder.search(query);
+    displaySearchResults(results);
+  }, 500);
+}
+
+function displaySearchResults(results) {
+  if (!searchResults) return;
+  
+  if (!results || results.length === 0) {
+    searchResults.innerHTML = `
+      <div class="search-result-item" style="color:#666;cursor:default;">
+        No locations found. Try a different search.
+      </div>
+    `;
+    searchResults.classList.remove('hidden');
+    return;
+  }
+  
+  searchResults.innerHTML = '';
+  results.forEach(result => {
+    const item = document.createElement('div');
+    item.className = 'search-result-item';
+    
+    const city = result.address.city || result.address.suburb || 'Unknown';
+    const road = result.address.road || '';
+    const displayAddress = road ? `${road}, ${city}` : city;
+    
+    item.innerHTML = `
+      <span class="result-address">${result.displayName}</span>
+      <span class="result-type">${city}, South Africa</span>
+    `;
+    
+    item.addEventListener('click', function() {
+      selectSearchResult(result);
+    });
+    
+    searchResults.appendChild(item);
+  });
+  
+  searchResults.classList.remove('hidden');
+}
+
+function selectSearchResult(result) {
+    const latlng = L.latLng(result.lat, result.lng);
+    
+    if (searchType === 'pickup') {
+        // Set pickup marker
+        if (pickupMarker) map.removeLayer(pickupMarker);
+        pickupMarker = L.marker(latlng, { icon: greenIcon })
+            .addTo(map)
+            .bindPopup('📍 Pickup: ' + result.displayName)
+            .openPopup();
+        
+        // Update state
+        if (clickState === 'pickup' || clickState === 'dropoff') {
+            clickState = 'dropoff';
+            instruction.textContent = 'Now click to set your dropoff location';
+        } else if (clickState === 'done') {
+            // Keep state but update marker
+        }
+        
+        map.setView(latlng, 15);
+        if (pickupSearch) pickupSearch.value = result.displayName;
+        
+        // ✅ Update location status
+        const locationStatus = document.getElementById('locationStatus');
+        if (locationStatus) {
+            locationStatus.textContent = `✅ Pickup set to: ${result.displayName}`;
+            locationStatus.className = 'location-status success';
+        }
+        
+        updateRideDetails();
+    } else {
+        // Set dropoff marker
+        if (dropoffMarker) map.removeLayer(dropoffMarker);
+        dropoffMarker = L.marker(latlng, { icon: redIcon })
+            .addTo(map)
+            .bindPopup('📍 Dropoff: ' + result.displayName)
+            .openPopup();
+        
+        clickState = 'done';
+        instruction.textContent = 'Ready! Click "Request Ride" to submit.';
+        rideControls.classList.remove('hidden');
+        map.setView(latlng, 15);
+        if (dropoffSearch) dropoffSearch.value = result.displayName;
+        
+        updateRideDetails();
+    }
+    
+    if (searchResults) searchResults.classList.add('hidden');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.search-section')) {
+    if (searchResults) searchResults.classList.add('hidden');
+  }
+});
+
 // ============ REQUEST RIDE ============
+const originalRequestHandler = requestBtn._listeners ? null : null;
+
+// Remove old listener and add new one
+requestBtn.removeEventListener('click', requestBtn._listeners);
 requestBtn.addEventListener('click', async function() {
   if (!pickupMarker || !dropoffMarker) {
-    showNotification('Please set both pickup and dropoff locations', 'error');
+    showInAppNotification('Error', 'Please set both pickup and dropoff locations', 'error');
     return;
   }
   
   if (!currentUser) {
-    showNotification('Please login first!', 'error');
+    showInAppNotification('Error', 'Please login first!', 'error');
     return;
+  }
+  
+  let pickupAddress = pickupSearch ? pickupSearch.value : '';
+  let dropoffAddress = dropoffSearch ? dropoffSearch.value : '';
+  
+  if (!pickupAddress) {
+    const pickupLatLng = pickupMarker.getLatLng();
+    const pickupResult = await geocoder.reverseGeocode(pickupLatLng.lat, pickupLatLng.lng);
+    if (pickupResult) {
+      pickupAddress = pickupResult.displayName;
+      if (pickupSearch) pickupSearch.value = pickupAddress;
+    }
+  }
+  
+  if (!dropoffAddress) {
+    const dropoffLatLng = dropoffMarker.getLatLng();
+    const dropoffResult = await geocoder.reverseGeocode(dropoffLatLng.lat, dropoffLatLng.lng);
+    if (dropoffResult) {
+      dropoffAddress = dropoffResult.displayName;
+      if (dropoffSearch) dropoffSearch.value = dropoffAddress;
+    }
   }
   
   const scheduledInput = document.getElementById('scheduledTime');
@@ -246,11 +532,13 @@ requestBtn.addEventListener('click', async function() {
   const rideData = {
     pickup: {
       lat: pickup.lat,
-      lng: pickup.lng
+      lng: pickup.lng,
+      address: pickupAddress
     },
     dropoff: {
       lat: dropoff.lat,
-      lng: dropoff.lng
+      lng: dropoff.lng,
+      address: dropoffAddress
     },
     rideType: selectedRideType,
     paymentMethod: selectedPayment,
@@ -281,15 +569,15 @@ requestBtn.addEventListener('click', async function() {
       const message = scheduledTime 
         ? 'Ride scheduled for ' + new Date(scheduledTime).toLocaleString()
         : 'Ride booked! R' + details.fare.toFixed(2);
-      showNotification(message, 'success');
+      showInAppNotification('Success', message, 'success');
       
       if (scheduledInput) scheduledInput.value = '';
     } else {
-      showNotification('Error: ' + (savedRide.error || 'Unknown error'), 'error');
+      showInAppNotification('Error', savedRide.error || 'Unknown error', 'error');
     }
   } catch (err) {
     console.error('Error requesting ride:', err);
-    showNotification('Network error. Please try again.', 'error');
+    showInAppNotification('Error', 'Network error. Please try again.', 'error');
   } finally {
     requestBtn.disabled = false;
     requestBtn.textContent = 'Request Ride';
@@ -307,6 +595,9 @@ function resetMarkers() {
   rideControls.classList.add('hidden');
   const rideDetails = document.getElementById('ride-details');
   if (rideDetails) rideDetails.classList.add('hidden');
+  if (pickupSearch) pickupSearch.value = '';
+  if (dropoffSearch) dropoffSearch.value = '';
+  if (searchResults) searchResults.classList.add('hidden');
 }
 
 resetBtn.addEventListener('click', resetMarkers);
@@ -323,6 +614,9 @@ function addRideToList(ride) {
     completed: 'Completed',
     cancelled: 'Cancelled'
   };
+  
+  const pickupDisplay = ride.pickup?.address || `${ride.pickup.lat.toFixed(4)}, ${ride.pickup.lng.toFixed(4)}`;
+  const dropoffDisplay = ride.dropoff?.address || `${ride.dropoff.lat.toFixed(4)}, ${ride.dropoff.lng.toFixed(4)}`;
   
   let ratingHTML = '';
   if (ride.status === 'completed' && ride.riderId === currentUser?.id) {
@@ -354,8 +648,12 @@ function addRideToList(ride) {
         <span class="ride-time">${new Date(ride.createdAt).toLocaleTimeString()}</span>
       </div>
       <div class="ride-coords">
-        Pickup: ${ride.pickup.lat.toFixed(4)}, ${ride.pickup.lng.toFixed(4)}<br>
-        Dropoff: ${ride.dropoff.lat.toFixed(4)}, ${ride.dropoff.lng.toFixed(4)}
+        <div class="address-line">
+          <span style="color:#00d4aa;">▲ Pickup:</span> ${pickupDisplay}
+        </div>
+        <div class="address-line">
+          <span style="color:#e74c3c;">▼ Dropoff:</span> ${dropoffDisplay}
+        </div>
       </div>
       <div class="ride-meta">
         <span>R${(ride.estimatedFare || 0).toFixed(2)}</span>
@@ -420,15 +718,15 @@ async function rateRide(rideId, rating) {
     });
     
     if (response.ok) {
-      showNotification('Rated ' + rating + ' stars! Thank you!', 'success');
+      showInAppNotification('Thank You!', 'Rated ' + rating + ' stars!', 'success');
       loadRides();
     } else {
       const data = await response.json();
-      showNotification('Error: ' + (data.error || 'Rating failed'), 'error');
+      showInAppNotification('Error', data.error || 'Rating failed', 'error');
     }
   } catch (err) {
     console.error('Error rating ride:', err);
-    showNotification('Network error', 'error');
+    showInAppNotification('Error', 'Network error', 'error');
   }
 }
 
@@ -478,14 +776,17 @@ function displayHistory(rides) {
       cancelled: 'Cancelled'
     };
     
+    const pickupDisplay = ride.pickup?.address || `${ride.pickup.lat.toFixed(4)}, ${ride.pickup.lng.toFixed(4)}`;
+    const dropoffDisplay = ride.dropoff?.address || `${ride.dropoff.lat.toFixed(4)}, ${ride.dropoff.lng.toFixed(4)}`;
+    
     div.innerHTML = `
       <div class="history-header">
         <span><strong>${ride.rideType || 'Economy'}</strong></span>
         <span class="status ${ride.status}">${statusMap[ride.status] || ride.status}</span>
       </div>
       <div class="history-coords">
-        ${ride.pickup.lat.toFixed(4)}, ${ride.pickup.lng.toFixed(4)}
-        → ${ride.dropoff.lat.toFixed(4)}, ${ride.dropoff.lng.toFixed(4)}
+        <div>▲ ${pickupDisplay}</div>
+        <div>▼ ${dropoffDisplay}</div>
       </div>
       <div class="history-meta">
         <span>R${(ride.estimatedFare || 0).toFixed(2)}</span>
@@ -551,13 +852,13 @@ const saveFavoriteBtn = document.getElementById('saveFavoriteBtn');
 if (saveFavoriteBtn) {
   saveFavoriteBtn.addEventListener('click', async function() {
     if (!pickupMarker) {
-      showNotification('Please set a pickup location first', 'error');
+      showInAppNotification('Error', 'Please set a pickup location first', 'error');
       return;
     }
     
     const name = document.getElementById('favoriteName').value.trim();
     if (!name) {
-      showNotification('Please enter a location name', 'error');
+      showInAppNotification('Error', 'Please enter a location name', 'error');
       return;
     }
     
@@ -572,16 +873,16 @@ if (saveFavoriteBtn) {
       });
       
       if (response.ok) {
-        showNotification('Saved "' + name + '" as favorite!', 'success');
+        showInAppNotification('Success', 'Saved "' + name + '" as favorite!', 'success');
         document.getElementById('favoriteName').value = '';
         loadFavorites();
       } else {
         const data = await response.json();
-        showNotification('Error: ' + (data.error || 'Failed to save'), 'error');
+        showInAppNotification('Error', data.error || 'Failed to save', 'error');
       }
     } catch (err) {
       console.error('Error saving favorite:', err);
-      showNotification('Network error', 'error');
+      showInAppNotification('Error', 'Network error', 'error');
     }
   });
 }
@@ -612,3 +913,208 @@ loadRides();
 console.log('RideBook Rider App Loaded');
 console.log('User:', currentUser?.username || 'Not logged in');
 console.log('Map centered on Port Elizabeth, South Africa');
+
+// ============ AUTO-DETECT USER LOCATION ============
+let isLocating = false;
+let locationStatus = document.createElement('div');
+locationStatus.className = 'location-status';
+locationStatus.id = 'locationStatus';
+locationStatus.textContent = '📍 Click the location button to detect your position';
+
+// Insert status after pickup search
+const pickupGroup = document.querySelector('.search-input-group');
+if (pickupGroup) {
+    pickupGroup.appendChild(locationStatus);
+}
+
+// Detect location button
+const detectBtn = document.getElementById('detectLocationBtn');
+if (detectBtn) {
+    detectBtn.addEventListener('click', async function() {
+        await detectUserLocation();
+    });
+}
+
+// Auto-detect location on page load (optional)
+// Uncomment this if you want auto-detection on page load
+// setTimeout(() => {
+//     detectUserLocation();
+// }, 2000);
+
+async function detectUserLocation() {
+    if (isLocating) return;
+    
+    const detectBtn = document.getElementById('detectLocationBtn');
+    const pickupSearch = document.getElementById('pickupSearch');
+    const locationStatus = document.getElementById('locationStatus');
+    
+    // Check if geolocation is available
+    if (!navigator.geolocation) {
+        locationStatus.textContent = '❌ Geolocation is not supported by your browser';
+        locationStatus.className = 'location-status error';
+        return;
+    }
+    
+    isLocating = true;
+    detectBtn.disabled = true;
+    detectBtn.classList.add('loading');
+    locationStatus.textContent = '⏳ Detecting your location...';
+    locationStatus.className = 'location-status loading';
+    
+    try {
+        // Get position with high accuracy
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        });
+        
+        const { latitude, longitude } = position.coords;
+        
+        // Show coordinates in status
+        locationStatus.textContent = `📍 Found: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} - Getting address...`;
+        
+        // Reverse geocode to get address
+        const address = await geocoder.reverseGeocode(latitude, longitude);
+        
+        if (address) {
+            // Update the pickup search field
+            pickupSearch.value = address.displayName;
+            locationStatus.textContent = `✅ Location found: ${address.displayName}`;
+            locationStatus.className = 'location-status success';
+            
+            // Set the marker on the map
+            const latlng = L.latLng(latitude, longitude);
+            
+            // Remove existing pickup marker if any
+            if (pickupMarker) {
+                map.removeLayer(pickupMarker);
+            }
+            
+            // Create new pickup marker
+            pickupMarker = L.marker(latlng, { icon: greenIcon })
+                .addTo(map)
+                .bindPopup('📍 Pickup: ' + address.displayName)
+                .openPopup();
+            
+            // Update state
+            if (clickState === 'pickup' || clickState === 'dropoff') {
+                clickState = 'dropoff';
+                instruction.textContent = 'Now click to set your dropoff location';
+            } else if (clickState === 'done') {
+                // If already done, keep state but update marker
+            }
+            
+            // Center map on location
+            map.setView(latlng, 15);
+            
+            // Update ride details
+            updateRideDetails();
+            
+            // Show notification
+            showInAppNotification(
+                'Location Detected',
+                `Pickup set to: ${address.displayName}`,
+                'success'
+            );
+            
+        } else {
+            // If reverse geocoding fails, use coordinates
+            pickupSearch.value = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+            locationStatus.textContent = `📍 Location found (coordinates): ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+            locationStatus.className = 'location-status success';
+            
+            // Set marker with coordinates
+            const latlng = L.latLng(latitude, longitude);
+            if (pickupMarker) map.removeLayer(pickupMarker);
+            pickupMarker = L.marker(latlng, { icon: greenIcon })
+                .addTo(map)
+                .bindPopup('📍 Pickup (auto-detected)')
+                .openPopup();
+            
+            if (clickState === 'pickup' || clickState === 'dropoff') {
+                clickState = 'dropoff';
+                instruction.textContent = 'Now click to set your dropoff location';
+            }
+            
+            map.setView(latlng, 15);
+            updateRideDetails();
+            
+            showInAppNotification(
+                'Location Detected',
+                'Pickup set using coordinates',
+                'info'
+            );
+        }
+        
+    } catch (error) {
+        console.error('Location detection error:', error);
+        
+        let errorMessage = 'Could not detect location. ';
+        if (error.code === 1) {
+            errorMessage += 'Please allow location access in your browser.';
+        } else if (error.code === 2) {
+            errorMessage += 'Location unavailable. Please try again.';
+        } else if (error.code === 3) {
+            errorMessage += 'Location request timed out. Please try again.';
+        } else {
+            errorMessage += 'Please enter your address manually.';
+        }
+        
+        locationStatus.textContent = '❌ ' + errorMessage;
+        locationStatus.className = 'location-status error';
+        
+        showInAppNotification(
+            'Location Error',
+            errorMessage,
+            'error'
+        );
+        
+        // Focus on pickup search so user can type
+        pickupSearch.focus();
+        
+    } finally {
+        isLocating = false;
+        detectBtn.disabled = false;
+        detectBtn.classList.remove('loading');
+    }
+}
+
+// ============ HANDLE PICKUP EDITING ============
+if (pickupSearch) {
+    pickupSearch.addEventListener('change', async function() {
+        const query = this.value.trim();
+        if (!query) return;
+        
+        // Search for the address
+        const results = await geocoder.search(query);
+        if (results && results.length > 0) {
+            // Select the first result
+            const result = results[0];
+            const latlng = L.latLng(result.lat, result.lng);
+            
+            if (pickupMarker) map.removeLayer(pickupMarker);
+            pickupMarker = L.marker(latlng, { icon: greenIcon })
+                .addTo(map)
+                .bindPopup('📍 Pickup: ' + result.displayName)
+                .openPopup();
+            
+            if (clickState === 'pickup' || clickState === 'dropoff') {
+                clickState = 'dropoff';
+                instruction.textContent = 'Now click to set your dropoff location';
+            }
+            
+            map.setView(latlng, 15);
+            updateRideDetails();
+            
+            // Update status
+            const locationStatus = document.getElementById('locationStatus');
+            if (locationStatus) {
+                locationStatus.textContent = `✅ Pickup updated to: ${result.displayName}`;
+                locationStatus.className = 'location-status success';
+            }
+        }
+    });
+}

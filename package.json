@@ -17,6 +17,7 @@
     "http": "^0.0.1-security",
     "mongodb": "^7.5.0",
     "mongoose": "^9.8.1",
+    "nodemailer": "^9.0.5",
     "socket.io": "^4.8.3"
   }
 }

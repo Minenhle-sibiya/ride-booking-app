@@ -213,9 +213,12 @@
         <p>Manage incoming ride requests</p>
       </div>
       <div class="header-actions">
-        <span class="ride-count">Active: <span id="countNumber">0</span></span>
-        <button class="logout-btn" onclick="logout()">Logout</button>
-      </div>
+    <span class="notification-badge" id="driver-notif-badge-container">
+        <span id="driver-notif-badge" class="badge-count" style="display:none;">0</span>
+    </span>
+    <span class="ride-count">Active: <span id="countNumber">0</span></span>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
     </div>
     <div id="driver-rides"></div>
   </div>
