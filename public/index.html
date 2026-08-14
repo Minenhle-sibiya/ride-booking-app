@@ -12,23 +12,135 @@
 <body>
   <div id="app">
     <div id="sidebar">
-      <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;">
-        <h1>RideBook</h1>
-        <button id="logout-btn" class="logout-btn">Logout</button>
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:15px;">
+        <h1> RideBook</h1>
+        <div>
+          <span id="userName" style="color:#aaa;margin-right:10px;"></span>
+          <button onclick="logout()" style="background:#e74c3c;color:#fff;padding:6px 14px;border:none;border-radius:4px;cursor:pointer;font-size:0.8rem;">
+            Logout
+          </button>
+        </div>
       </div>
-      <p class="instruction" id="instruction">Click the map to set your pickup location</p>
+
+      <!-- NEW: Ride Type Selection -->
+      <div class="ride-types">
+        <button class="ride-type-btn active" data-type="economy">
+           Economy<br>
+          <small>$1.50/km</small>
+        </button>
+        <button class="ride-type-btn" data-type="premium">
+           Premium<br>
+          <small>$2.50/km</small>
+        </button>
+        <button class="ride-type-btn" data-type="suv">
+           SUV<br>
+          <small>$3.00/km</small>
+        </button>
+        <button class="ride-type-btn" data-type="xl">
+           XL<br>
+          <small>$3.50/km</small>
+        </button>
+      </div>
+
+      <!-- NEW: Payment Method -->
+      <div class="payment-method">
+        <label> Payment:</label>
+        <select id="paymentMethod">
+          <option value="cash">Cash</option>
+          <option value="card">Card</option>
+          <option value="paypal">PayPal</option>
+        </select>
+      </div>
+
+      <!-- NEW: Scheduled Ride -->
+      <div class="schedule-section">
+        <label> Schedule Ride:</label>
+        <input type="datetime-local" id="scheduledTime">
+        <small style="color:#666;display:block;margin-top:4px;">Leave empty for immediate booking</small>
+      </div>
+
+      <!-- NEW: Favorite Locations -->
+      <div class="favorites-section">
+        <label> Saved Locations:</label>
+        <select id="favoritesSelect">
+          <option value="">Select a saved location...</option>
+        </select>
+        <div class="add-favorite">
+          <input type="text" id="favoriteName" placeholder="Location name">
+          <button id="saveFavoriteBtn"> Save</button>
+        </div>
+      </div>
+
+      <p class="instruction" id="instruction"> Click the map to set your pickup location</p>
+
+      <!-- NEW: Ride Details -->
+      <div id="ride-details" class="hidden">
+        <div class="detail-item">
+          <span> Distance:</span>
+          <span id="rideDistance">0</span> km
+        </div>
+        <div class="detail-item">
+          <span> Duration:</span>
+          <span id="rideDuration">0</span> min
+        </div>
+        <div class="detail-item">
+          <span> Estimated Fare:</span>
+          <span id="rideFare">$0.00</span>
+        </div>
+      </div>
+
       <div id="ride-controls" class="hidden">
-        <button id="request-btn">Request Ride</button>
-        <button id="reset-btn">Reset</button>
+        <button id="request-btn" class="btn-primary">🚀 Request Ride</button>
+        <button id="reset-btn" class="btn-secondary">🔄 Reset</button>
       </div>
-      <h2>Requested Rides</h2>
+
+      <h2> Your Rides</h2>
       <ul id="rides-list"></ul>
+
+      <!-- NEW: Ride History -->
+      <h2 style="margin-top:20px;"> Ride History</h2>
+      <div class="history-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="completed">Completed</button>
+        <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+      </div>
+      <div id="history-list"></div>
     </div>
     <div id="map"></div>
   </div>
+
+  <!-- Notification Container -->
+  <div id="notification-container"></div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="app.js"></script>
+
+  <script>
+    // Check if user is logged in
+    const userData = localStorage.getItem('ridebook_user');
+    if (!userData) {
+        window.location.href = '/';
+    }
+    
+    const user = JSON.parse(userData);
+    if (user.role !== 'rider') {
+        window.location.href = '/driver';
+    }
+    
+    console.log(' Logged in as:', user.username, '(Rider)');
+    
+    // Set username display
+    document.getElementById('userName').textContent = '👤 ' + (user.name || user.username);
+    
+    function logout() {
+        localStorage.removeItem('ridebook_user');
+        window.location.href = '/';
+    }
+  </script>
 </body>
 </html>
