@@ -209,6 +209,109 @@
             text-decoration: underline;
         }
 
+        /* Password visibility toggle */
+        .password-group {
+            position: relative;
+        }
+
+        .password-group input {
+            padding-right: 40px;
+        }
+
+        .toggle-password-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 5px;
+            transition: color 0.3s;
+        }
+
+        .toggle-password-btn:hover {
+            color: #00d4aa;
+        }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            padding: 40px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #2a2a4a;
+        }
+
+        .modal-header h2 {
+            color: #00d4aa;
+            font-size: 1.3rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #00d4aa;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .form-footer a {
+            color: #00d4aa;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
         /* Loading spinner */
         .spinner {
             display: inline-block;
@@ -248,13 +351,17 @@
                 <label>Username</label>
                 <input type="text" id="loginUsername" placeholder="Enter your username" required>
             </div>
-            <div class="form-group">
+            <div class="form-group password-group">
                 <label>Password</label>
                 <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                <i class="far fa-eye" id="togglePassword" style="cursor: pointer; margin-left: -30px;"></i>
             </div>
             <button type="submit" class="btn-primary" id="loginBtn">Sign In</button>
             <div class="form-footer">
-                Don't have an account? <a href="#" id="switchToSignup">Create one</a>
+                <div>Don't have an account? <a href="#" id="switchToSignup">Create one</a></div>
+                <div style="margin-top: 10px;">
+                    <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                </div>
             </div>
         </form>
 
@@ -268,9 +375,10 @@
                 <label>Username</label>
                 <input type="text" id="signupUsername" placeholder="Choose a username" required>
             </div>
-            <div class="form-group">
+            <div class="form-group password-group">
                 <label>Password (min 6 characters)</label>
                 <input type="password" id="signupPassword" placeholder="Choose a password" minlength="6" required>
+<i class="far fa-eye" id="togglePassword" style="cursor: pointer; margin-left: -30px;"></i>
             </div>
             <div class="form-group">
                 <label>Email (optional)</label>
@@ -284,11 +392,11 @@
                 <label>I want to be a:</label>
                 <div class="role-selector">
                     <div class="role-option selected" data-role="rider">
-                        <span class="icon">🧑</span>
+                        <span class="icon"></span>
                         Rider
                     </div>
                     <div class="role-option" data-role="driver">
-                        <span class="icon">🚗</span>
+                        <span class="icon"></span>
                         Driver
                     </div>
                 </div>
@@ -298,6 +406,31 @@
                 Already have an account? <a href="#" id="switchToLogin">Sign in</a>
             </div>
         </form>
+    </div>
+
+    <!-- FORGOT PASSWORD MODAL -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reset Password</h2>
+                <button type="button" class="close-modal" id="closeForgotModal">&times;</button>
+            </div>
+            <form id="forgotPasswordForm">
+                <div id="forgotStep1">
+                    <p style="color: #aaa; margin-bottom: 20px; font-size: 0.9rem;">Enter your username to reset your password</p>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="forgotUsername" placeholder="Enter your username" required>
+                    </div>
+                    <button type="submit" class="btn-primary" id="forgotBtn">Send Reset Link</button>
+                </div>
+                <div id="forgotStep2" style="display: none;">
+                    <p style="color: #00d4aa; margin-bottom: 20px; font-size: 0.9rem;">✅ Check your email for password reset instructions!</p>
+                    <p style="color: #aaa; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.5;">A password reset link has been sent to the email associated with your account. If you don't see it, check your spam folder.</p>
+                    <button type="button" class="btn-primary" id="backToLogin" style="background: #444466;">Back to Login</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -521,6 +654,99 @@
                     signupForm.dispatchEvent(new Event('submit'));
                 }
             }
+        });
+
+        // ============ PASSWORD VISIBILITY TOGGLE ============
+        const toggleLoginPassword = document.getElementById('toggleLoginPassword');
+        const toggleSignupPassword = document.getElementById('toggleSignupPassword');
+
+        function setupPasswordToggle(toggleBtn, passwordInput) {
+            if (!toggleBtn || !passwordInput) return;
+            
+            toggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                this.textContent = isPassword ? '🙈' : '👁️';
+            });
+        }
+
+        setupPasswordToggle(toggleLoginPassword, loginPassword);
+        setupPasswordToggle(toggleSignupPassword, signupPassword);
+
+        // ============ FORGOT PASSWORD MODAL ============
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const closeForgotModal = document.getElementById('closeForgotModal');
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        const forgotUsername = document.getElementById('forgotUsername');
+        const forgotBtn = document.getElementById('forgotBtn');
+        const backToLogin = document.getElementById('backToLogin');
+        const forgotStep1 = document.getElementById('forgotStep1');
+        const forgotStep2 = document.getElementById('forgotStep2');
+
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            forgotPasswordModal.classList.add('show');
+            forgotStep1.style.display = 'block';
+            forgotStep2.style.display = 'none';
+            forgotUsername.value = '';
+        });
+
+        closeForgotModal.addEventListener('click', function() {
+            forgotPasswordModal.classList.remove('show');
+        });
+
+        // Close modal when clicking outside
+        forgotPasswordModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+            }
+        });
+
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = forgotUsername.value.trim();
+            if (!username) {
+                showError('Please enter your username');
+                return;
+            }
+
+            setLoading(forgotBtn, true);
+
+            try {
+                // In a real app, this would call an API endpoint to send password reset email
+                const response = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Show success message
+                    forgotStep1.style.display = 'none';
+                    forgotStep2.style.display = 'block';
+                    
+                    // Auto-close modal after 5 seconds
+                    setTimeout(() => {
+                        forgotPasswordModal.classList.remove('show');
+                    }, 5000);
+                } else {
+                    showError(data.error || 'Failed to send reset link. Please try again.');
+                }
+            } catch (error) {
+                console.error('Forgot password error:', error);
+                showError('Network error. Please check your connection.');
+            } finally {
+                setLoading(forgotBtn, false);
+            }
+        });
+
+        backToLogin.addEventListener('click', function() {
+            forgotPasswordModal.classList.remove('show');
         });
 
         // ============ CHECK IF ALREADY LOGGED IN ============

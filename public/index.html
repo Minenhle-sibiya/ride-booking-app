@@ -11,154 +11,183 @@
 </head>
 <body>
   <div id="app">
-  <div id="sidebar">
-    <!-- Header -->
-    <div class="sidebar-header">
+    <div id="sidebar">
+      <!-- Header -->
+      <div class="sidebar-header">
         <h1>RideBook</h1>
         <div class="user-info">
-            <span id="userName" class="user-name">Guest</span>
-            <button onclick="logout()" class="logout-btn">Logout</button>
+          <span id="userName" class="user-name">Guest</span>
+          <button onclick="logout()" class="logout-btn">Logout</button>
         </div>
-    </div>
+      </div>
 
-    <!-- Ride Types -->
-    <div class="ride-types">
+      <!-- Ride Types -->
+      <div class="ride-types">
         <button class="ride-type-btn active" data-type="economy">
-            <span class="ride-type-name">Economy</span>
-            <span class="ride-type-price">R15/km</span>
+          <span class="ride-type-name">Economy</span>
+          <span class="ride-type-price">R15/km</span>
         </button>
         <button class="ride-type-btn" data-type="premium">
-            <span class="ride-type-name">Premium</span>
-            <span class="ride-type-price">R25/km</span>
+          <span class="ride-type-name">Premium</span>
+          <span class="ride-type-price">R25/km</span>
         </button>
         <button class="ride-type-btn" data-type="suv">
-            <span class="ride-type-name">SUV</span>
-            <span class="ride-type-price">R30/km</span>
+          <span class="ride-type-name">SUV</span>
+          <span class="ride-type-price">R30/km</span>
         </button>
         <button class="ride-type-btn" data-type="xl">
-            <span class="ride-type-name">XL</span>
-            <span class="ride-type-price">R35/km</span>
+          <span class="ride-type-name">XL</span>
+          <span class="ride-type-price">R35/km</span>
         </button>
-    </div>
+      </div>
 
-    <!-- Payment Method -->
-    <div class="payment-method">
+      <!-- Payment Method -->
+      <div class="payment-method">
         <label>Payment:</label>
         <select id="paymentMethod">
-            <option value="cash">Cash</option>
-            <option value="card">Card</option>
-            <option value="paypal">PayPal</option>
+          <option value="cash">Cash</option>
+          <option value="card">Card</option>
+          <option value="paypal">PayPal</option>
         </select>
-    </div>
+      </div>
 
-    <!-- Schedule Ride -->
-    <div class="schedule-section">
+      <!-- Schedule Ride -->
+      <div class="schedule-section">
         <label>Schedule Ride:</label>
         <input type="datetime-local" id="scheduledTime">
         <span class="hint">Leave empty for immediate booking</span>
-    </div>
+      </div>
 
-    <!-- Saved Locations -->
-    <div class="favorites-section">
-        <label>Saved Locations:</label>
-        <select id="favoritesSelect">
-            <option value="">Select a saved location...</option>
-        </select>
-        <div class="add-favorite">
-            <input type="text" id="favoriteName" placeholder="Location name">
-            <button id="saveFavoriteBtn" class="save-fav-btn">Save</button>
-        </div>
-    </div>
-
-    <!-- Quick Cities -->
-    <div class="city-section">
+      <!-- Quick Cities -->
+      <div class="city-section">
         <label>Quick Cities:</label>
         <div class="city-buttons">
-            <button class="city-btn" data-lat="-33.9608" data-lng="25.6022">Port Elizabeth</button>
-            <button class="city-btn" data-lat="-33.9249" data-lng="18.4241">Cape Town</button>
-            <button class="city-btn" data-lat="-26.2041" data-lng="28.0473">Johannesburg</button>
-            <button class="city-btn" data-lat="-29.8587" data-lng="31.0218">Durban</button>
+          <button class="city-btn" data-lat="-33.9608" data-lng="25.6022">Port Elizabeth</button>
+          <button class="city-btn" data-lat="-33.9249" data-lng="18.4241">Cape Town</button>
+          <button class="city-btn" data-lat="-26.2041" data-lng="28.0473">Johannesburg</button>
+          <button class="city-btn" data-lat="-29.8587" data-lng="31.0218">Durban</button>
         </div>
-    </div>
+      </div>
 
-    <!-- Instruction -->
-    <p class="instruction" id="instruction">Click the map to set your pickup location</p>
+      <!-- Instruction -->
+      <p class="instruction" id="instruction">Click the map to set your pickup location</p>
 
-    <!-- ✅ Search Section - Clean Layout -->
-    <div class="search-section">
+      <!-- Search Section -->
+      <div class="search-section">
         <!-- Pickup -->
         <div class="search-input-group">
-            <label>Pickup Location</label>
-            <div class="search-box">
-                <input type="text" id="pickupSearch" placeholder="Search pickup address..." />
-                <button id="searchPickupBtn" class="search-btn">Search</button>
-                <button id="detectLocationBtn" class="location-btn" title="Use my current location">📍</button>
-            </div>
-            <div id="locationStatus" class="location-status"></div>
+          <label>Pickup Location</label>
+          <div class="search-box">
+            <input type="text" id="pickupSearch" placeholder="Search pickup address..." />
+            <button id="searchPickupBtn" class="search-btn">Search</button>
+            <button id="detectLocationBtn" class="location-btn" title="Use my current location">📍</button>
+          </div>
+          <div id="locationStatus" class="location-status"></div>
         </div>
         
         <!-- Dropoff -->
         <div class="search-input-group">
-            <label>Dropoff Location</label>
-            <div class="search-box">
-                <input type="text" id="dropoffSearch" placeholder="Search dropoff address..." />
-                <button id="searchDropoffBtn" class="search-btn">Search</button>
-            </div>
+          <label>Dropoff Location</label>
+          <div class="search-box">
+            <input type="text" id="dropoffSearch" placeholder="Search dropoff address..." />
+            <button id="searchDropoffBtn" class="search-btn">Search</button>
+          </div>
         </div>
         
         <!-- Search Results -->
         <div id="searchResults" class="search-results hidden"></div>
-    </div>
+      </div>
 
-    <!-- Ride Details -->
-    <div id="ride-details" class="hidden">
+      <!-- Ride Details -->
+      <div id="ride-details" class="hidden">
         <div class="detail-item">
-            <span class="detail-label">Distance:</span>
-            <span id="rideDistance">0</span> km
+          <span class="detail-label">Distance:</span>
+          <span id="rideDistance">0</span> km
         </div>
         <div class="detail-item">
-            <span class="detail-label">Duration:</span>
-            <span id="rideDuration">0</span> min
+          <span class="detail-label">Duration:</span>
+          <span id="rideDuration">0</span> min
         </div>
         <div class="detail-item">
-            <span class="detail-label">Estimated Fare:</span>
-            <span id="rideFare">R0.00</span>
+          <span class="detail-label">Estimated Fare:</span>
+          <span id="rideFare">R0.00</span>
         </div>
-    </div>
+      </div>
 
-    <!-- Ride Controls -->
-    <div id="ride-controls" class="hidden">
+      <!-- Ride Controls -->
+      <div id="ride-controls" class="hidden">
         <button id="request-btn" class="btn-primary">Request Ride</button>
         <button id="reset-btn" class="btn-secondary">Reset</button>
-    </div>
+      </div>
 
-    <!-- Your Rides -->
-    <h2>Your Rides</h2>
-    <ul id="rides-list"></ul>
+      <!-- ✅ REMOVED: Your Rides section - No rides show in sidebar -->
 
-    <!-- Ride History -->
-    <h2 style="margin-top:15px;">Ride History</h2>
-    <div class="history-filters">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="pending">Pending</button>
-        <button class="filter-btn" data-filter="completed">Completed</button>
-        <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+      <!-- View History Button (Only way to see rides) -->
+      <div style="margin-top:15px;">
+        <button id="viewHistoryBtn" class="btn-primary" style="width:100%; background:#6c63ff; color:#fff;">
+          📜 View Ride History
+        </button>
+      </div>
     </div>
-    <div id="history-list"></div>
-</div>
     <div id="map"></div>
   </div>
 
   <!-- Notification Container -->
   <div id="notification-container"></div>
 
+  <!-- ============ MODALS ============ -->
+
+  <!-- Ride History Modal -->
+  <div id="historyModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📜 Ride History</h2>
+        <button id="closeHistoryBtn" class="modal-close">Close</button>
+      </div>
+      <!-- All rides will be displayed here -->
+      <div id="historyModalContent">
+        <p style="color:#888; text-align:center; padding:20px;">Loading rides...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ride Details Modal -->
+  <div id="rideDetailModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🚗 Ride Details</h2>
+        <button id="closeDetailBtn" class="modal-close">Close</button>
+      </div>
+      <div id="rideDetailContent">
+        <!-- Filled by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div id="receiptModal" class="modal" style="display:none;">
+    <div class="modal-content" style="background:#ffffff; color:#1a1a2e;">
+      <div class="modal-header" style="border-bottom:1px solid #eee; padding-bottom:15px;">
+        <h2 style="color:#00d4aa;">🧾 Ride Receipt</h2>
+        <div>
+          <button id="downloadPdfBtn" style="background:#00d4aa; color:#1a1a2e; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; margin-right:8px; font-weight:600;">⬇️ Download PDF</button>
+          <button id="closeReceiptBtn" style="background:#e74c3c; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">Close</button>
+        </div>
+      </div>
+      <div id="receiptContent">
+        <!-- Filled by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCRIPTS ============ -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""></script>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script src="app.js"></script>
-  <!-- Add this after Leaflet JS -->
+  <!-- IMPORTANT: geocoder.js MUST load BEFORE app.js -->
   <script src="geocoder.js"></script>
+  <script src="app.js"></script>
 
   <script>
     // Check if user is logged in
@@ -172,10 +201,10 @@
         window.location.href = '/driver';
     }
     
-    console.log(' Logged in as:', user.username, '(Rider)');
+    console.log('Logged in as:', user.username, '(Rider)');
     
     // Set username display
-    document.getElementById('userName').textContent = '👤 ' + (user.name || user.username);
+    document.getElementById('userName').textContent = user.name || user.username;
     
     function logout() {
         localStorage.removeItem('ridebook_user');

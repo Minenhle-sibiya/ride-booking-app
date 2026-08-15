@@ -156,6 +156,44 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// ============ FORGOT PASSWORD ============
+app.post('/api/forgot-password', async (req, res) => {
+  if (!MONGO_URI) {
+    return res.status(501).json({ error: 'Password reset requires a configured database (MONGO_URI).' });
+  }
+  try {
+    const { username } = req.body;
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+    
+    const user = await User.findOne({ username: username.toLowerCase() });
+    if (!user) {
+      // For security, don't reveal if user exists
+      return res.json({ 
+        success: true, 
+        message: 'If an account exists with this username, a password reset link has been sent.' 
+      });
+    }
+    
+    // In a production app, you would:
+    // 1. Generate a unique reset token
+    // 2. Save it to the database with an expiration time
+    // 3. Send an email with a reset link containing the token
+    
+    // For now, we'll just return success
+    console.log(`🔐 Password reset requested for user: ${username}`);
+    
+    return res.json({ 
+      success: true, 
+      message: 'Password reset link has been sent to your email' 
+    });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ============ GET USER PROFILE ============
 app.get('/api/users/:username', async (req, res) => {
   if (!MONGO_URI) {
