@@ -6,17 +6,35 @@
   <title>RideBook - Driver Dashboard</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    :root {
+      --cream: #fffdf9;
+      --baby-pink: #f9d9e8;
+      --baby-blue: #dfeeff;
+      --baby-blue-strong: #bfe3ff;
+      --baby-blue-deep: #8ec5ff;
+      --panel: #fffafc;
+      --panel-strong: #edf6ff;
+      --text: #2d4159;
+      --muted: #6f7d8d;
+      --line: #dfeaf7;
+      --shadow: rgba(142, 197, 255, 0.22);
+      --danger: #ef8ea2;
+    }
+
     body { 
       overflow: auto; 
-      background: #0f0f1a;
+      background: linear-gradient(135deg, var(--cream) 0%, var(--baby-blue) 100%);
+      color: var(--text);
     }
     #driver-dashboard {
       max-width: 800px;
       margin: 0 auto;
       padding: 30px 20px;
-      background: #1a1a2e;
+      background: rgba(255, 255, 255, 0.8);
       min-height: 100vh;
-      color: #ffffff;
+      color: var(--text);
+      border-left: 1px solid rgba(191, 227, 255, 0.8);
+      border-right: 1px solid rgba(191, 227, 255, 0.8);
     }
     .driver-header {
       display: flex;
@@ -26,11 +44,11 @@
       margin-bottom: 20px;
     }
     .driver-header h1 {
-      color: #00d4aa;
+      color: var(--text);
       font-size: 1.8rem;
     }
     .driver-header p {
-      color: #aaaaaa;
+      color: var(--muted);
     }
     .header-actions {
       display: flex;
@@ -38,39 +56,43 @@
       gap: 12px;
     }
     .ride-count {
-      background: #16213e;
+      background: linear-gradient(135deg, var(--baby-blue) 0%, var(--baby-pink) 100%);
       padding: 8px 14px;
       border-radius: 20px;
       font-size: 0.85rem;
-      color: #aaaaaa;
+      color: var(--text);
+      border: 1px solid rgba(142, 197, 255, 0.4);
     }
     .ride-count span {
-      color: #00d4aa;
+      color: var(--text);
       font-weight: bold;
     }
     .logout-btn {
-      background: #e74c3c;
-      color: #ffffff;
+      background: linear-gradient(135deg, var(--baby-pink) 0%, #f1c2d7 100%);
+      color: var(--text);
       padding: 8px 16px;
       border: none;
-      border-radius: 4px;
+      border-radius: 10px;
       cursor: pointer;
+      box-shadow: 0 8px 20px rgba(244, 191, 215, 0.28);
     }
     .logout-btn:hover {
-      background: #c0392b;
+      filter: brightness(0.98);
     }
     .ride-card {
-      background: #16213e;
+      background: linear-gradient(135deg, var(--panel) 0%, #ffffff 100%);
       padding: 16px;
-      border-radius: 8px;
+      border-radius: 12px;
       margin-bottom: 12px;
-      border-left: 4px solid #ffc107;
+      border-left: 4px solid #f4c98b;
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 18px rgba(142, 197, 255, 0.08);
     }
     .ride-card.accepted {
-      border-left-color: #00d4aa;
+      border-left-color: var(--baby-blue-deep);
     }
     .ride-card.in_progress {
-      border-left-color: #3498db;
+      border-left-color: #9bbcf7;
     }
     .ride-card-header {
       display: flex;

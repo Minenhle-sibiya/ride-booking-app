@@ -357,7 +357,7 @@ async function displayRoute(pickup, dropoff) {
         const latlngs = geometry.coordinates.map(coord => [coord[1], coord[0]]);
         
         routeLayer = L.polyline(latlngs, {
-            color: '#00d4aa',
+            color: '#8ec5ff',
             weight: 6,
             opacity: 1,
             lineJoin: 'round',
@@ -367,9 +367,9 @@ async function displayRoute(pickup, dropoff) {
         
         // Add subtle glow effect
         const glowLayer = L.polyline(latlngs, {
-            color: '#00d4aa',
+            color: '#f4bfd7',
             weight: 12,
-            opacity: 0.15,
+            opacity: 0.22,
             lineJoin: 'round',
             lineCap: 'round',
             pane: 'overlayPane'

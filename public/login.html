@@ -11,23 +11,42 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --cream: #fffdf9;
+            --baby-pink: #f9d9e8;
+            --baby-pink-strong: #f4bfd7;
+            --baby-blue: #dfeeff;
+            --baby-blue-strong: #bfe3ff;
+            --baby-blue-deep: #8ec5ff;
+            --card: #fffafc;
+            --panel: #f5faff;
+            --panel-strong: #edf6ff;
+            --text: #2d4159;
+            --muted: #6f7d8d;
+            --line: #dfeaf7;
+            --shadow: rgba(142, 197, 255, 0.22);
+            --danger: #ef8ea2;
+            --success-bg: #ebfff6;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f1a;
+            background: linear-gradient(135deg, var(--cream) 0%, var(--baby-blue) 100%);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            color: #fff;
+            color: var(--text);
         }
 
         .container {
-            background: #1a1a2e;
+            background: rgba(255, 255, 255, 0.82);
             padding: 40px;
-            border-radius: 16px;
+            border-radius: 20px;
             width: 100%;
             max-width: 420px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 16px 40px var(--shadow);
+            border: 1px solid rgba(191, 227, 255, 0.9);
         }
 
         .logo {
@@ -37,12 +56,12 @@
 
         .logo h1 {
             font-size: 2rem;
-            color: #00d4aa;
+            color: var(--text);
             margin-bottom: 5px;
         }
 
         .logo p {
-            color: #888;
+            color: var(--muted);
             font-size: 0.9rem;
         }
 
@@ -55,10 +74,10 @@
         .tab-btn {
             flex: 1;
             padding: 10px;
-            background: #16213e;
+            background: var(--panel);
             border: 2px solid transparent;
-            border-radius: 8px;
-            color: #888;
+            border-radius: 10px;
+            color: var(--muted);
             cursor: pointer;
             font-size: 0.95rem;
             font-weight: 600;
@@ -66,13 +85,13 @@
         }
 
         .tab-btn.active {
-            border-color: #00d4aa;
-            color: #00d4aa;
-            background: #1a2a3e;
+            border-color: var(--baby-blue-deep);
+            color: var(--text);
+            background: linear-gradient(135deg, var(--baby-blue) 0%, var(--baby-pink) 100%);
         }
 
         .tab-btn:hover {
-            background: #1a2a3e;
+            background: var(--panel-strong);
         }
 
         .form-group {
@@ -81,7 +100,7 @@
 
         .form-group label {
             display: block;
-            color: #aaa;
+            color: var(--text);
             font-size: 0.85rem;
             margin-bottom: 5px;
         }
@@ -90,40 +109,43 @@
         .form-group select {
             width: 100%;
             padding: 12px 14px;
-            background: #0f0f1a;
-            border: 1px solid #2a2a4a;
-            border-radius: 8px;
-            color: #fff;
+            background: var(--cream);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            color: var(--text);
             font-size: 1rem;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #00d4aa;
+            border-color: var(--baby-blue-deep);
+            box-shadow: 0 0 0 3px rgba(142, 197, 255, 0.18);
         }
 
         .form-group select option {
-            background: #1a1a2e;
-            color: #fff;
+            background: #fff;
+            color: var(--text);
         }
 
         .btn-primary {
             width: 100%;
             padding: 14px;
-            background: #00d4aa;
+            background: linear-gradient(135deg, var(--baby-pink) 0%, var(--baby-blue-strong) 100%);
             border: none;
-            border-radius: 8px;
-            color: #1a1a2e;
+            border-radius: 10px;
+            color: var(--text);
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 20px rgba(244, 191, 215, 0.35);
         }
 
         .btn-primary:hover {
-            background: #00b894;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(142, 197, 255, 0.28);
         }
 
         .btn-primary:disabled {
@@ -132,8 +154,8 @@
         }
 
         .error-message {
-            background: #2a0a0a;
-            color: #ff6b6b;
+            background: #fff1f4;
+            color: var(--danger);
             padding: 10px;
             border-radius: 8px;
             margin-bottom: 15px;
@@ -146,8 +168,8 @@
         }
 
         .success-message {
-            background: #0a2a1a;
-            color: #00d4aa;
+            background: var(--success-bg);
+            color: #4b7d6d;
             padding: 10px;
             border-radius: 8px;
             margin-bottom: 15px;
@@ -168,22 +190,23 @@
         .role-option {
             flex: 1;
             padding: 12px;
-            background: #0f0f1a;
-            border: 2px solid #2a2a4a;
-            border-radius: 8px;
+            background: var(--cream);
+            border: 2px solid var(--line);
+            border-radius: 10px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
             font-size: 0.9rem;
+            color: var(--text);
         }
 
         .role-option:hover {
-            border-color: #444;
+            border-color: var(--baby-blue-deep);
         }
 
         .role-option.selected {
-            border-color: #00d4aa;
-            background: #1a2a3e;
+            border-color: var(--baby-blue-deep);
+            background: linear-gradient(135deg, var(--baby-blue) 0%, var(--baby-pink) 100%);
         }
 
         .role-option .icon {
@@ -195,14 +218,14 @@
         .form-footer {
             text-align: center;
             margin-top: 20px;
-            color: #888;
+            color: var(--muted);
             font-size: 0.9rem;
         }
 
         .form-footer a {
-            color: #00d4aa;
+            color: var(--text);
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .form-footer a:hover {
